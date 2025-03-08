@@ -503,7 +503,7 @@
         </form>
     
     * create a Login button is user already registered:
-        <p>Already Registered? <a>Login Here</a> </p
+        <p>Already Registered? <a href="{% url 'users-register' %}">Login Here</a> </p
 
 *** Create url pattern for the register page: 
 * there are two ways to do these:
@@ -616,10 +616,13 @@
     
 
 >>>>> AUTHENTICATION SYSTEM LOGIN/LOGOUT <<<<<
+1. LOGIN 
     * the new users creted from the registration form above would not be able to login yet.
     * we need to authenticate them 
     * open the project 'urls.py', import 'views' from 'auth' as i.e 'auth.views'
+    * this imported 'views' has ready-made 'LoginView' class, which has login form with username and passowrd fields 
         from django.contrib.auth import views as 'auth_views'
+        
     * create login and logout paths for the 'auth_views' 
 
         urlpatterns = [
@@ -629,7 +632,7 @@
         ]
 
     * the two paths defined for LoginView and Logout are class based views 
-    * by default, if we navigate to '/login' or '/logout' in the url, django would be looging for the templates 'login.html' or 'logout.html' inside a 'registration' folder .
+    * by default, if we navigate to '/login' or '/logout' in the url, django would be looking for the templates 'login.html' or 'logout.html' inside a 'registration' folder .
         i.e registration/login.html
     
     * but we want to override this, by making both files to be inside our 'users' folder 
@@ -639,9 +642,238 @@
          path('login/',  auth_views.LoginView.as_view(template_name='users/login.html'), name='users-login'),
         path('logout/',  auth_views.LogoutView.as_view(template_name='users/logout.html'), name='users-logout'),
     
-    * now, in the users' template, create a login.html file 
+    * now, in the users' templates, create a login.html file 
         users/templates/users/login.html
+    * copy and paste from 'register.html' 
+    * now edit the file:
+
+        {% extends 'blog/base.html' %}
+        {% load crispy_forms_tags %}
+        {% block content %}
+            <div class="content-section">
+                <form method="POST">
+                    {% csrf_token %}
+                    <fieldset class="form-group">
+                        <legend class="border-bottom mb-4s">Login Page</legend>
+                        {{ form|crispy }}
+                    </fieldset>
+                    <div class="form-group">
+                        <button class="btn btn-outline-info" type="submit">Login</button>
+                    </div>
+                </form>
+                <div class="border-top pt-3">
+                    <small class="text-muted">New User, Register here?
+                        <a href="{% url 'register' %}" class="ms-2">Sign Up Now</a>
+                    </small>
+                </div>
+            </div>
+        {% endblock content %}
+
+* now, navigate to /login 
+* the form is ready, and performing validations for wrong username and or password 
+* login with currect credentials, then it hits a 404 page, because there is no path defined for 'accounts/profile' 
+* this is the default behavior for django when user login 
+* but we want to modify, so that it redirect to our home page
+* go to 'settings.py':
+    LOGIN_REDIRECT_URL = 'blog-home'
+
+* now, we want to modify the register method in 'views.py', to redirect to login page instead of the home page when a new user sign up.
+    def register(request):
+        ...
+        return redirect('users-login')
+
+2. LOGOUT 
+* we already defined a url path for logout 
+    path('logout/', auth_users.LogoutView(), name='users-logout')
+* since we don't pass any argument i.e. 'template_name' into the 'LogoutView' class, the default django admin logout page will be activated.
+* but we want to override this, by redirecting to our own page  when a user click logout 
+    path('logout/', auth_users.LogoutView(template_name='users/logout.html'), name='users-logout')
+
+* now, create 'logout.html' file inside the 'users'
+    users/templates/users/logout.html
+    {% block content %}
+        <h2>You have been logged out </h2>
+        <div class='border-top pt-3'>
+            <small>
+                <a href="{% url 'users-login' %}" class='ml-2'>Log In Again</a>
+            </small>
+        </div>
+    {% endblock content %}
+
+* the latest django version does not allow GET request method for logout again.
+* but we instead use 'POST' method.
+* so we wil create a form, post method, action directed to our logout url path, csrf_token, and a submit button.
+* we can put this form in our template or anywere 
+    <form method="POST" action="{% url 'users-logout' %}">
+        {% csrf_token %}
+        <button class="btn btn-outline-info" type="submit">Logout</button>
+    </form>
+
+
+>>>>>>> CHANGING THE NAVIGATION BAR BASED ON LOGIN OR LOGOUT
+* we want to set condition in the 'base.html' template where our navigation bar resides
+
+* IF LOGGED OUT:
+    - we want to see only:
+        * register 
+        * login 
+        
+* IF LOGGED IN: 
+    - we want to see only:
+        * logout 
+
+    {% if user.is_authenticated %}
+        <form method="POST" action="{% url 'users-logout' %}">
+            {% csrf_token %}
+            <button class="btn btn-outline-info" type="submit">Logout</button>
+        </form>
+    {% else %}
+        <a href="{% url 'users-register' %}">Register</a>
+        <a href="{% url 'users-login' %}">Login</a>
+    {% endif %}
+
+>>>>>> RESTRICTING SOME CERTAIN ROUTES <<<<< 
+* We want only logged in users to be able to visit some routes:
+* any request to such routes will redirect to the login page
+
+### Profile Page 
+* we want to create a profile page for current users, that will only display the user's username 
+* define profile method in 'views.py'
+    users/views.py 
+    def profile(request):
+        return render(request, 'users/profile.html')
+
+* define a path to the view in the main's project 'urls.py'
+    myproject/urls.py 
+    from users import views as users_views 
+    urlpatterns = [
+        ...,
+        path('profile', users_views.profile, name='users-profile'),
+    ]
+
+* create the 'profile.html' template and output the user's username 
+    users/templates/users/profile.html:
+    {% extends 'blog/base.html' %}
+    {% block content %}
+        <h4>Welcome, {{ user.username }}</h4>
+        
+    {% endblock content %}
+
+* now we want to restrict only logged in user to access the profile page, using the django provided 'login decorator'
+* a decorator add function security to an existing function 
+* in this case, to protect the profile view 
+* opent the user 'views.py' and import the login_required method decorator 
+    users/views.py 
+    from django.contrib.auth.decorators import login_required 
+
+* just before the profile method, add @login_required
+
+    @login_required
+    def profile(request):
+        return render(request, 'users/profile.html')
+
+* trying to access the /profile url in the browser will now display standard 404 page not found
+
+* if we want it to reirect to login page:
+    - open settings.py:
+        LOGIN_URL = 'users-login'
+
+
+>>>>>>> USERS PROFILE AND PICTURES <<<<<<< 
+* by default, the user's model in django does not have a field for profile picture.
+* we need to add this field 
+* we need to extend the user model and create a new profile model that has a one-to-one relationship with the user model 
+    - one user only has one profile, and vice versa
+
+* open the 'models.py in the 'users' folder 
+    - we create the one-to-one relationship
+    - we will add only one field 'image' to the Profile model 
+    - all images will be uploaded to the 'profile_pics' folder 
+    - we return a readable string each time a profile object is created
+
+    users/moels.py 
+    from django.db import models 
+    from django.contrib.auth.models import User 
+
+    class Profile(models.Model):
+        user = models.OneToOneField(User, on_delete=models.CASCADE)
+        image = models.ImageField(default='default.jpg', upload_to='profile_pics')
+
+        def __str__(self):
+            return f"{self.user.username} Profile" 
+
+* next is to make a database migration 
+    ~ python manage.py makemigrations 
+
+* we will get error because its an image field, and 'Pillow' package is required 
+    ~ pip install Pillow
+
+* retry the makemigrations command on more time,
+    ~ python manage.py makemigrations 
+
+* then make the migration so that User table will be updated and Profile table will be created:
+    ~ python manage.py migrate 
+
+* now register the Profile model in the 'admin.py' file in 'users' folder 
+    - this will make users to manage Profile on the admin page 
+    users/admin.py
+    from django.contrib import admin
+    from models import Profile 
+
+    admin.site.register(Profile)
+
+* navigate to /admin in browser and add a new profile with image 
+* the image will automatically uploaded into the specified name 'profile_pics'
+
+* getting familiar with the image object:
+* run the django python shell 
+    ~ python manage.py shell 
+
+* get the django User model 
+    from django.contrib.auth.models import User 
+
+* get the user with a specified username by filter 'admin'
+    user = User.objects.filter(username='admin').first()
+
+* get the user profile:
+    user.profile 
+
+* get the users image:
+    user.profile.image 
+
+* get the image width:
+    user.profile.image.width #same for height
+
+* get the image location/url:
+    user.profile.image.url 
+
+* a user with no image uploaded to the Profile automatically has 'default.jpg' set, so we need to upload an image with such name into the image folder 
+
+#### SETTING THE IMAGE LOCATION 
+* we do not want our image folders to be in the main dirrectory of our project 
+* open 'settings.py' and define the MEDIA_ROOT and MEDIA_URL just at the bottom 
+* MEDIA_ROOT is the absolute directory where uploadoad files will be saved 
+* we want to jointhe absolute path of our project with a directory called 'media'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+* MEDIA_URL is the publicurl of that directory that can be accessec from the browser.
+    MEDIA_URL = '/media/'
+
+* when a new profile is created, the full path to the picture will be:
+    media/profile_pics/[pic_name]
+
+* next is t0 define url_patterns for our media files in projects main 'urls,py'
+    - import 'settings' and 'debug' 
     
+
+
+
+
+
+
+
+
+
+
 
 
 
