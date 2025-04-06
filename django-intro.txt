@@ -862,8 +862,45 @@
     media/profile_pics/[pic_name]
 
 * next is t0 define url_patterns for our media files in projects main 'urls,py'
-    - import 'settings' and 'debug' 
-    
+    - import 'settings' and 'debug'
+    from django.conf import settings 
+    from django.conf.urls.static import static  
+
+    if settings.DEBUG:
+        urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+* set up the profile.html template:
+    {% extends 'blog/base.html' %}
+    {% block content %}
+        <div class="content-section">
+            <div class="media">
+                <img src="{{ user.profile.image.url }}" alt="" class="rounded-circle account-img" />
+                <div class="media-body">
+                    <h2 class="account-heading">{{ user.username }}</h2>
+                    <p class="text-secondary">{{ user.email }}</p>
+                </div>
+            </div>
+        </div>
+        
+    {% endblock content %}
+
+>>>> CREATE A PROFILE AUTOMATICALLY WHEN A NEW USER IS CREATED <<<<<
+* we make use of django signal 
+* the User model will serves as the signal sender
+* create a new file 'signals.py' inside the 'users' directory
+    myprojects/users/signals.py
+
+    from django.db.models.signals import post_save 
+    from django.contrib.auth.models import User 
+    from django.dispatch import receiver 
+    from .models import Profile 
+
+    @receiver(post_save, sender=User)
+    def create_profile(sender, instance, creatd, **kwargs):
+        if created:
+            Profile.objects.create(user=instance)
+
+
 
 
 
