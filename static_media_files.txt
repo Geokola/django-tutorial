@@ -1,1 +1,52 @@
+##### HANDLING STATIC AND MEDIA FILE IN DJANGO #####
+1. Perform the following settings in your 'settings.py'
+  # Static files i.e css,javascript, images
+  STATIC_URL = '/static/'
+  STATIC_ROOT = BASE_DIR, 'static_files'
+  STATICFILES_DIRS = [BASE_DIR / "static"]
 
+  # Media files i.e Uploaded files by users
+  MEDIA_URL = '/media'
+  MEDIA_ROOT = BASE_DIR / "media_files"
+
+2. Configure your 'urls.py'
+  from django.conf import settings 
+  from django.conf.urls.static import static
+  from django.contrib import admin
+  from django.urls import path 
+
+  urlpatterns = [
+    path('admin/', admin.site.urls),
+    # other url patterns
+  ]
+
+  # Serve static and media files during development 
+  if settings.DEBUG == True:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+3. Collect Static Files
+  ~ python manage.py collectstatic
+  - the above command will copy all static files from your app
+
+NOTE: the settings above only work when running Django during development. In production, configure your web server to serve these files.
+
+
+#### FURTHER EXPLANATION ######
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
