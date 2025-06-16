@@ -28,14 +28,32 @@
 
 3. Collect Static Files
   ~ python manage.py collectstatic
-  - the above command will copy all static files from your app
+  - The above command will copy all static files from your app and store them in the provided STATIC_ROOT
 
-NOTE: the settings above only work when running Django during development. In production, configure your web server to serve these files.
+NOTE: The settings above only work when running Django during development. In production, configure your web server to serve these files.
+
+4. USING THE STATIC FILES IN YOUR TEMPLATES 
+  * assuming you have a css file called 'styles.css'
+  * the folder structure for this css file is:
+      myproject/blogapp/static/styles.css
+  * to use this file in a template i.e 'index.html'
+  * the folder structure for this html file is:
+      myproject/blogapp/templates/index.html
+  * add {% load static %} to the top of the template file
+  * for each file you would like to link, add the {% static %} template tag
+    ~ index.html
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'base.css' %}">
+
+  * or if you want to load a javascript file:
+    <script src="{% static 'your_javascript_file' %}"></script>
+
 
 
 #### FURTHER EXPLANATION ######
 * in each app inside your project, Django automatically look for a folder named 'static' for the static files.
-* 
+* tell Django to look for static files in additional locations by defining STATICFILES_DIRS in settings.py 
+
 
 
 
