@@ -1,1 +1,105 @@
+##### TUTORIAL ON UPLOADING A MEDIA FILE IN DJANGO ######
+1. STEP ONE: Directory Structure 
+  - Django expects static files to be stored in a directory named 'static' within your app's directory.
+  my_app/
+    static/
+      my_app/
+        css/
+        js/
+        images/
+
+2. STEP TWO: Settings Configurations
+  - open 'settings.py' and configure STATIC_URL, STATIC_ROOT, MEDIA_URL, and MEDIA_ROOT
+  import os 
+  STATIC_URL = '/static/'
+  STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+  MEDIA_URL = '/media/'
+  MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+3. STEP THREE: Collect Static Command
+  ~ python manage.py collectstatic 
+  - run this command each time you make changes to the static files
+
+5. STEP FOUR: Configure URL
+  - you need to configure urlpatterns in 'urls.py' to easily locate the static files and media.
+  
+  from django.conf import settings
+  from django.conf.urls.static import static
+  from django.urls import path, include
+  from django.contrib import admin
+
+  urlpatterns = [
+    path('admin/', admin.site.urls),
+    # other urls
+  ]
+
+if settings.DEBUG:
+  urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)  
+  urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+6. STEP SIX: Configure a Model 
+  - to handle media files, modify your models to include fields that can store file paths.
+  ~ models.py
+  from django.db import models
+
+  class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to='profile_pics/')
+
+7. STEP SEVEN: Form Configuration
+  ~ forms.py
+  from django import forms
+  from .models import UserProfile 
+
+  class UserProfileForm(forms.ModelForm):
+    class Meta:
+      model = UserProfile
+      fields = ['profile_picture']
+
+8. STEP EIGHT: View Configuration
+  ~ views.py 
+
+  def upload_profile_picture(request):
+    if request.method == 'POST':
+      form = UserProfileForm(request.POST, request.FILES)
+      if form.is_valid():
+        form.save()
+        return redirect('/')
+    else:
+      form = UserProfileForm()
+      return render(request, 'upload_profile.html', {'form':form})
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
