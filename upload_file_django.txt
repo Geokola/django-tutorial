@@ -68,6 +68,12 @@ if settings.DEBUG:
     else:
       form = UserProfileForm()
       return render(request, 'upload_profile.html', {'form':form})
+
+9. STEP NINE: Configure Template:
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p}}
+    <button type="submit">Upload</button>
   
 
 
