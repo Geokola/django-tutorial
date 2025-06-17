@@ -1,1 +1,42 @@
+#### Make Model Fields Visible in Admin Panel #### 
+* There are two ways 
+1. Change the string representation function in the model 
+~ models.py 
+from django.db import models 
+
+class Member(models.Models):
+   firstname = models.CharField(max_length=100)
+lastname = models.CharField(max_length=100)
+phone = models.IntegerFielf(null=True)
+date_joined = models.DateField(null=True)
+
+def __str__(self):
+   return f"{self.firstname} {self.lastname}"
+
+2. Set the list_display
+* in the admin.py, we can set the list_display property 
+~ admin.py 
+
+from django.contrib import admin 
+from .models import Member 
+
+class MemberAdmin(admin.ModelAdmin):
+   list_display = ("firstname", "lastname", "date_joined")
+
+admin.site.register(Member, MemberAdmin)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
