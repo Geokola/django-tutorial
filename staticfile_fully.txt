@@ -1,1 +1,137 @@
+#### STATIC FILES ####
+~ project name = my_tennis_club
+~ app name = members
+
+1. Create Static Folder 
+- this folder will have files like css, js, images 
+- the name of the folder has to be 'static' in the app of your project: 
+    my_tennis_club
+    manage.py
+    my_tennis_club/
+    members/
+        templates/
+        static/
+
+2. Add a css file i.e static/myfirst.css 
+    body {
+        background-color: lightblue;
+        font-family: verdana;
+    }
+
+3. Modify the Template 
+    members/templates/template.html 
+    {% load static %}
+    <!DOCTYPE html>
+    <html>
+        <link rel="stylesheet" href="{% static 'myfirst.css' %}">
+    <body>
+
+    {% for x in fruits %}
+        <h1>{{ x }}</h1>
+    {% endfor %}
+
+    </body>
+    </html>
+
+4. Restart server for the changes to take efffect 
+    ~ python manage.py runserver 
+
+NOTE: if 'DEBUG' is true in the settings, the example above will work. BUT if it is false, the static files will not be served yet.
+
+##### STATIC FILES FOR PROJECT DEPLOYEMENT OR PRODUCTION #####
+5. Choose Debug = False in 'settings.py'
+    DEBUG = False 
+
+6. Remember to update the allowed hosts 
+    - use default '127.0.0.1', 'localhost', or your real domain name 
+
+7. Install WhiteNoiose module 
+    ~ pip install whitenoise 
+    - this module helps us to serve static file 
+
+8. Modify Settings 'settings.py' 
+    - make django aware of you wanting to run WhiteNoise in the MIDDLEWARE list 
+    MIDDLEWARE = [
+        ...,
+        'whitenoise.middleware.WhiteNoiseMiddleware',
+    ]
+
+9. Collect Static Files 
+    - when in deployment mode (debug is false), static files have to be collected and put in a specified folder before we can use it.
+    - create a STATIC_ROOT property in 'settings.py'
+    - the value is a name of a folder where you want to collect your static files, it could be given any name
+    - for example 'productionfiles'
+
+    STATIC_ROOT = BASE_DIR / 'productionfiles'
+    STATIC_URL = 'static/'
+
+    - run command to auto create the folder and put all static files of your project into this folder 
+    ~ python manage.py collectstatic 
+
+10. The Example Should Work 
+    ~ python manage.py runserver 
+    - visit your project url 
+
+
+##### Global Static Files #####
+1. Create a static folder in the project directory 
+- what we just learnt is adding static files in the application's static folder and use them only in the application.
+- if we want other applications in our project to use the file 
+- then, create a folder on the root directory and put the files there. 
+- then tell django where to look for these static files.
+- create folder in the project's root level, call it any name i.e. 'mystaticfiles'
+
+    my_tennis_club
+    db.sqlite3
+    manage.py
+    my_tennis_club/
+    members/
+    mystaticfiles/
+
+2. Create a css file i.e myglobal.css 
+    body{
+        color: violet;
+    }
+
+3. Modify Settings 'settings.py'
+
+    STATICFILES_DIRS = [
+        BASE_DIR / 'mystaticfiles',
+    ]
+
+    - this is a static file directory list, we can list all the directories where django should look for static files.
+    - the BASE_DIR keyword represents the root directory of the project.
+
+4. Search Order
+    - if you have files with the same name, django will use the first occurrence.
+    - the search starts in the directories listed in STATICFILES_DIRS, in the order provided.
+    - if the file is not found, then it moves to the 'static' folder of each application.
+
+5. MOdify your template 
+    {% load static %}
+        <!DOCTYPE html>
+    <html>
+        <link rel="stylesheet" href="{% static 'myglobal.css' %}">
+    <body>
+
+        {% for x in fruits %}
+        <h1>{{ x }}</h1>
+        {% endfor %}
+
+    </body>
+    </html>
+
+6. Collect Static Files 
+    ~ python manage.py collectstatic 
+
+    - then run your server: 127.0.0.1:8000/testing
+
+
+
+
+
+
+
+
+
 
