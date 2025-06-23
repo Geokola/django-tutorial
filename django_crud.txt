@@ -1,0 +1,230 @@
+#### This demonstrate how to implement CRUD in Django ####
+
+1. Setup the project and the app
+    - project name is core 
+    - app name is recipe
+
+2. Configure settings.py 
+    INSTALLED_APPS = [
+        ...,
+        'recipe',
+    ]
+
+3. Create Recipe Model models.py
+    from django.db import models
+    from django.contrib.auth.models import User
+
+    class Recipe(models.Model):
+        user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+        recipe_name = models.CharField(max_length=100)
+        recipe_description = models.TextField()
+        recipe_image = models.ImageField(upload_to="recipe")
+        recipe_view_count = models.PositiveIntegerField(default=1)
+
+        def __str__(self):
+            return self.recipe_name
+
+4. Create Views views.py 
+
+    from django.shortcuts import render, redirect, get_object_or_404
+    from .models import Recipe
+
+    def recipes(request):
+        if request.method == 'POST':
+            data = request.POST
+            recipe_image = request.FILES.get('recipe_image')
+            recipe_name = data.get('recipe_name')
+            recipe_description = data.get('recipe_description')
+
+            Recipe.objects.create(
+                recipe_image=recipe_image,
+                recipe_name=recipe_name,
+                recipe_description=recipe_description,
+            )
+            return redirect('/')
+
+        queryset = Recipe.objects.all()
+        if request.GET.get('search'):
+            queryset = queryset.filter(recipe_name__icontains=request.GET.get('search'))
+
+        context = {'recipes': queryset}
+        return render(request, 'recipes.html', context)
+
+
+    def delete_recipe(request, id):
+        recipe = get_object_or_404(Recipe, id=id)
+        recipe.delete()
+        return redirect('/')
+
+
+    def update_recipe(request, id):
+        recipe = get_object_or_404(Recipe, id=id)
+        if request.method == 'POST':
+            data = request.POST
+            recipe_name = data.get('recipe_name')
+            recipe_description = data.get('recipe_description')
+            recipe_image = request.FILES.get('recipe_image')
+
+            recipe.recipe_name = recipe_name
+            recipe.recipe_description = recipe_description
+            if recipe_image:
+                recipe.recipe_image = recipe_image
+            recipe.save()
+            return redirect('/')
+
+        context = {'recipe': recipe}
+        return render(request, 'update_recipe.html', context)
+
+5. Register Model in Admin admin.py
+  from django.contrib import admin
+    from .models import Recipe
+
+    admin.site.register(Recipe)
+
+6. Create Templates recipes.html
+
+    {% extends "base.html" %}
+    {% block start %}
+    
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+    .text{
+        color: green;
+        font-weight: bold;
+    }
+    </style>
+    
+    <div class="container mt-5">
+        
+        <form class="col-6 mx-auto card p-3 shadow-lg" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <h2 class="text  text-center"> GeeksforGeeks </h2>
+            <br>
+            <h3>Add Recipe</h3>
+            <hr>
+            <div class="form-group">
+            <label for="exampleInputEmail1">Recipe name</label>
+            <input name="recipe_name" type="text" class="form-control"  required>
+            </div>
+            <div class="form-group">
+            <label for="exampleInputPassword1"  >Recipe description</label>
+            <textarea name="recipe_description" class="form-control" required ></textarea>
+            </div>
+            <div class="form-group">
+                <label for="exampleInputPassword1">Recipe Image</label>
+                <input name="recipe_image" type="file" class="form-control" >
+            </div>
+        
+            <button type="submit" class="btn btn-success">Add Recipe</button>
+        </form>
+    
+        <hr>
+        <div class="class mt-5">
+            <form action="">
+    
+            <div class="max-auto col-6">
+                <div class="form-group">
+                <label for="exampleInputEmail1">Search Food</label>
+                <input name="search" type="text" class="form-control">
+                </div>
+                <button type="submit" class="btn btn-primary "> Search</button>
+            </form>
+            </div>
+        </div>
+        <table class="table mt-5">
+            <thead>
+    
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Recipe name</th>
+                <th scope="col">Recipe Desc</th>
+                <th scope="col">Image</th>
+                <th scope="col">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+                {% for recipe in recipes %}
+            <tr>
+                <th scope="row">{{forloop.counter}}</th>
+                <td>{{recipe.recipe_name}}</td>
+                <td>{{recipe.recipe_description}}</td>
+                <td>
+                    <img src="/media/{{recipe.recipe_image}}" style="height: 100px;"> </td>
+                    <td>
+                        <a href="/delete_recipe/{{recipe.id }}" class="btn btn-danger m-2">Delete</a>
+                        <a href="/update_recipe/{{recipe.id }}" class="btn btn-success">Update</a>
+                    </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        
+    </div>
+    
+    {% endblock %}
+
+7. Create the base.html
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>{{ page|default:"Recipe CRUD" }}</title>
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+        <style>
+            table {
+                width: 80%;
+                margin: 20px auto;
+                border-collapse: collapse;
+            }
+            th, td {
+                padding: 10px;
+                border: 1px solid #ccc;
+                text-align: left;
+            }
+            th {
+                background-color: #f2f2f2;
+            }
+            tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            tr:hover {
+                background-color: #ddd;
+            }
+        </style>
+    </head>
+    <body>
+        {% block start %}{% endblock %}
+    </body>
+    </html>
+
+
+8. Set up the URL urls.py
+
+    from django.contrib import admin
+    from django.urls import path
+    from receipe import views
+
+    urlpatterns = [
+        path('admin/', admin.site.urls),
+        path('', views.receipes),
+        path('update_receipe/<id>', views.update_receipe, name='update_receipe'),
+    path('delete_receipe/<id>', views.delete_receipe, name='delete_receipe'),
+    ]
+
+9. Create and Run Migrations 
+    python manage.py makemigrations
+    python manage.py migrate        
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
