@@ -1,0 +1,168 @@
+class based view in django
+
+STEP 1 Define a model
+from django.db import models
+ 
+class GeeksModel(models.Model):
+
+    title = models.CharField(max_length = 200)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.title
+
+STEP TWO: Create a ModelForm
+from django import forms
+from .models import GeeksModel
+
+class GeeksForm(forms.ModelForm):
+
+    class Meta:
+        model = GeeksModel
+        fields = ["title", "description",]
+
+
+STEP THREE: Create a class based view 
+from django.views.generic.edit import CreateView
+from .models import GeeksModel
+
+class GeeksCreate(CreateView):
+    model = GeeksModel
+    fields = ['title', 'description']
+    template_name = 'geeks/geeksmodel_form.html'
+    success_url = '/'
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Submit">
+</form>
+
+from django.urls import path
+from .views import GeeksCreate
+
+urlpatterns = [
+    path('create/', GeeksCreate.as_view(), name='geeks_create'),
+]
+
+##########
+ListView (For Retrieving Multiple Entries)
+from django.views.generic.list import ListView
+from .models import GeeksModel
+
+class GeeksList(ListView):
+    model = GeeksModel
+    template_name = 'geeks/geeksmodel_list.html'
+    context_object_name = 'geeks_list'
+
+<ul>
+    <!-- Iterate over object_list -->
+    {% for object in object_list %}
+    <!-- Display Objects -->
+    <li>{{ object.title }}</li>
+    <li>{{ object.description }}</li>
+
+    <hr/>
+    <!-- If object_list is empty  -->
+    {% empty %}
+    <li>No objects yet.</li>
+    {% endfor %}
+</ul>
+
+from django.urls import path
+from .views import GeeksList
+
+urlpatterns = [
+    path('', GeeksList.as_view(), name='geeks_list'),
+]
+
+###########
+DetailView (For Retrieving a Single Entry)
+from django.views.generic.detail import DetailView
+
+from .models import GeeksModel
+
+class GeeksDetailView(DetailView):
+    # specify the model to use
+    model = GeeksModel
+
+from django.urls import path
+
+# importing views from views..py
+from .views import GeeksDetailView
+urlpatterns = [
+    # <pk> is identification for id field,
+    # slug can also be used
+    path('<pk>/', GeeksDetailView.as_view()),
+]
+
+<h1>{{ object.title }}</h1>
+
+<p>{{ object.description }}</p>
+
+Let's check what is there on "http://localhost:8000/1/"
+
+#############
+UpdateView (For Updating Entries)
+from django.views.generic.edit import UpdateView
+
+from .models import GeeksModel
+
+class GeeksUpdateView(UpdateView):
+    model = GeeksModel
+
+    fields = [
+        "title",
+        "description"
+    ]
+
+    success_url ="/"
+
+from django.urls import path
+
+from .views import GeeksUpdateView
+urlpatterns = [
+    path('<pk>/update', GeeksUpdateView.as_view()),
+]
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Save">
+</form>
+
+Let's check what is there on "http://localhost:8000/1/update/" 
+
+
+################
+DeleteView (For Deleting Entries)
+from django.views.generic.edit import DeleteView
+from .models import GeeksModel
+
+class GeeksDeleteView(DeleteView):
+    model = GeeksModel
+    success_url ="/"
+
+from django.urls import path
+from .views import GeeksDeleteView
+urlpatterns = [
+    path('<pk>/delete/', GeeksDeleteView.as_view()),
+]
+
+<form method="post">{% csrf_token %}
+    <p>Are you sure you want to delete "{{ object }}"?</p>
+    <input type="submit" value="Confirm">
+</form>
+
+Let's check what is there on "http://localhost:8000/1/delete"
+
+
+
+
+
+
+
+
+
+
+
